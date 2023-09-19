@@ -5,6 +5,8 @@ const user = require('./model/schema');
 const referal = require('./model/Referal_schema');
 const useraddress = require('./model/Address_schema')
 const cors = require('cors');
+const os = require('os');
+
 
 
 const app = express();
@@ -12,6 +14,8 @@ app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+console.log(os.cpus().length);
 
 
 function generateuserid(length = 10) {
@@ -99,9 +103,9 @@ app.post('/api/store-address', async (req, res) => {
   const newuser = new user({ userid: userId, userAddress: userAddress });
   await newuser.save()
   .then(async (result) => {
-    console.log('Data saved successfully:', result);
+    // console.log('Data saved successfully:', result);
 
-    const newuserRef = new referal({ Refer_by: userId, Refer_to: referralCode });
+    const newuserRef = new referal({ Refer_by: referralCode, Refer_to: userId });
     await newuserRef.save();
   }).catch((error) => {
       if (error.code === 11000) {
@@ -114,6 +118,25 @@ app.post('/api/store-address', async (req, res) => {
       }
     });
   // res.json({ success: true, message: 'MetaMask address stored successfully' });
+});
+
+
+app.post('/api/verify-address',async(req, res) => {
+const { userAddress } = req.body;
+try{
+const existinguser = await user.findOne({userAddress:userAddress})
+if(existinguser){
+  res.json({success:true,message:'user exist'});
+  return ;
+}else{
+  res.json({success:false,message:'user not found'});
+  return;
+}
+}catch(error){
+  console.error(error);
+  res.status(500).json({ success: false, message: 'Server error' });
+}
+
 });
 
 
